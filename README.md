@@ -11,7 +11,7 @@ Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\pack
 
 Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\abetterui.dzip" "c:\temp\Unpack_Witcher2_abetterui"
 Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\alchemy_suit.dzip" "c:\temp\Unpack_Witcher2_alchemy_suit"
-Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\arena.dzip" "c:\temp\Unpack_Witcher2_alchemy_arena"
+Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\arena.dzip" "c:\temp\Unpack_Witcher2_arena"
 Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\base_scripts.dzip" "c:\temp\Unpack_Witcher2_base_scripts"
 Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\darkdiff.dzip" "c:\temp\Unpack_Witcher2_darkdiff"
 Gibbed.RED.Unpack.exe "c:\GOG Games\The Witcher 2 Enhanced Edition\CookedPC\dlc_finishers.dzip" "c:\temp\Unpack_Witcher2_dlc_finishers"
