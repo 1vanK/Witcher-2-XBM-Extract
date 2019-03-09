@@ -183,7 +183,7 @@ static class Program
                 break; // Полей больше нет
 
             string fieldName = strings[fieldNameID - 1]; // - 1 так как индексация начинается с 1
-            ushort fieldTypeID = reader.ReadUInt16(); // ID типа поля (4 байата)
+            ushort fieldTypeID = reader.ReadUInt16(); // ID типа поля (4 байта)
             string fieldType = strings[fieldTypeID - 1];
 
             // Что-то (2 байта)
