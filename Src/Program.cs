@@ -15,6 +15,7 @@ class Image
     public string format = null;
     public int xenonDownscaleBias = 0;
     public List<byte[]> mipmaps = new List<byte[]>();
+    public byte[] uncompressed = null;
 }
 
 static class Program
@@ -59,8 +60,7 @@ static class Program
         return Encoding.ASCII.GetString(bytes);
     }
 
-    // Имя файла передается только для сообщения об ошибке
-    static Image Parse(BinaryReader reader, string fileName)
+    static Image Parse(BinaryReader reader)
     {
         // Сигнатура файла (4 байта)
         uint signature = reader.ReadUInt32();
@@ -160,7 +160,7 @@ static class Program
 
         // Что-то (4 байта)
         byte something10 = reader.ReadByte();
-        if (something10 != 0x80) // Всегда 128
+        if (something10 != 0x80) // Всегда 128 (строка нулевой длины?)
             throw new Exception("something10 != 0x80");
 
         // При правильной обработке файла мы должны оказаться в начале объекта CBitmapTexture
@@ -267,7 +267,7 @@ static class Program
             uint mipWidth = reader.ReadUInt32();
             uint mipHeight = reader.ReadUInt32();
 
-            uint something14 = reader.ReadUInt32();
+            uint something14 = reader.ReadUInt32(); // Pitch?
 
             int size = reader.ReadInt32();
             byte[] data = reader.ReadBytes(size);
@@ -280,21 +280,28 @@ static class Program
         // Что-то (4 байта)
         uint something15 = reader.ReadUInt32();
         if (something15 != 0) // Всегда 0
-            Console.WriteLine("\n" + fileName + " | something15 != 0");
+            throw new Exception("something15 != 0");
 
-        // Что-то (1 байт)
-        byte something16 = reader.ReadByte();
-        if (something16 != 0) // Всегда 0
-            Console.WriteLine("\n" + fileName + " | something16 != 0");
+        // Записано ли дальше исходное изображение (1 байт)
+        bool isUncompressedData = reader.ReadBoolean();
+
+        if (isUncompressedData)
+        {
+            uint width = reader.ReadUInt32();
+            uint height = reader.ReadUInt32();
+            uint pitch = reader.ReadUInt32();
+            int size = reader.ReadInt32();
+
+            result.uncompressed = reader.ReadBytes(size);
+        }
 
         // Проверяем, что дошли до конца файла
         if (reader.BaseStream.Position != reader.BaseStream.Length)
-            Console.WriteLine("\n" + fileName + " | reader.BaseStream.Position != reader.BaseStream.Length");
+            throw new Exception("something15 != 0");
 
         return result;
     }
 
-    // TRF_Grayscale нигде не используется
     static void Save(Image image, BinaryWriter writer)
     {
         // Начинаем запись в DDS
@@ -328,12 +335,17 @@ static class Program
         writer.Write(32u); // dwSize
 
         uint pfFlags = 0x0u;
-        if (image.compression == "TCM_DXTAlpha")
-            pfFlags |= 0x1u; // DDPF_ALPHAPIXELS
         if (image.compression != null)
+        {
             pfFlags |= 0x4u; // DDPF_FOURCC
+        }
         else
-            pfFlags |= 0x40u;// DDPF_RGB
+        {
+            if (image.format == "TRF_Grayscale")
+                pfFlags |= 0x20000u; // DDPF_LUMINANCE
+            else
+                pfFlags |= 0x40u; // DDPF_RGB
+        }
         writer.Write(pfFlags); // dwFlags
 
         // dwFourCC
@@ -356,7 +368,12 @@ static class Program
         }
         else
         {
-            writer.Write(32u); // dwRGBBitCount
+            // dwRGBBitCount
+            if (image.format == "TRF_Grayscale")
+                writer.Write(8u);
+            else
+                writer.Write(32u);
+
             writer.Write(0x00FF0000u); // dwRBitMask
             writer.Write(0x0000FF00u); // dwGBitMask
             writer.Write(0x000000FFu); // dwBBitMask
@@ -384,6 +401,33 @@ static class Program
             writer.Write(data);
     }
 
+    static void SaveUncompressed(Image image, BinaryWriter writer)
+    {
+        // https://ru.wikipedia.org/wiki/BMP
+        // https://docs.microsoft.com/en-us/windows/desktop/api/wingdi/ns-wingdi-tagbitmapfileheader
+
+        // BITMAPFILEHEADER
+        writer.Write((ushort)0x4D42u); // bfType = BM
+        writer.Write((uint)(122 + image.uncompressed.Length)); // bfSize
+        writer.Write((ushort)0u); // bfReserved1
+        writer.Write((ushort)0u); // bfReserved2
+        writer.Write(54u); // bfOffBits
+
+        // BITMAPINFOHEADER
+        writer.Write(40u); // biSize
+        writer.Write(image.width);
+        writer.Write(-(int)image.height); // Отрицательное значение, чтобы перевернуть изображение
+        writer.Write((ushort)1u); // biPlanes
+        writer.Write((ushort)32u); // biBitCount
+        writer.Write(0u); // biCompression = BI_RGB
+        writer.Write(0u); // biSizeImage
+        writer.Write(0); // biXPelsPerMeter
+        writer.Write(0); // biYPelsPerMeter
+        writer.Write(0u); // biClrUsed
+        writer.Write(0u); // biClrImportant
+
+        writer.Write(image.uncompressed);
+    }
 
     static void PrintUsage()
     {
@@ -425,7 +469,7 @@ static class Program
 
             using (BinaryReader reader = new BinaryReader(File.Open(inputFile, FileMode.Open)))
             {
-                Image image = Parse(reader, inputFile);
+                Image image = Parse(reader);
 
                 using (BinaryWriter writer = new BinaryWriter(File.Open(outputFile, FileMode.Create)))
                 {
@@ -444,7 +488,7 @@ static class Program
     {
         foreach (string fileName in Directory.GetFiles(inputDir, "*.xbm", SearchOption.AllDirectories))
         {
-            Console.Write(".");
+            Console.WriteLine(fileName);
 
             try
             {
@@ -457,13 +501,23 @@ static class Program
 
                 using (BinaryReader reader = new BinaryReader(File.Open(inputFile, FileMode.Open)))
                 {
-                    Image image = Parse(reader, inputFile);
+                    Image image = Parse(reader);
 
                     Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
 
                     using (BinaryWriter writer = new BinaryWriter(File.Open(outputFile, FileMode.Create)))
                     {
                         Save(image, writer);
+                    }
+
+                    if (image.uncompressed != null)
+                    {
+                        string outputUncompressed = RemoveExtension(outputFile) + ".bmp";
+
+                        using (BinaryWriter writer = new BinaryWriter(File.Open(outputUncompressed, FileMode.Create)))
+                        {
+                            SaveUncompressed(image, writer);
+                        }
                     }
                 }
             }
@@ -507,6 +561,8 @@ static class Program
             ProcessFile(input, output);
         else
             ProcessDir(input, output);
+
+        Console.WriteLine("\nEND");
 
         return;
     }
