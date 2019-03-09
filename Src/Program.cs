@@ -87,7 +87,7 @@ static class Program
         if (numStrings == 0) // Всегда больше нуля
             throw new Exception("numStrings == 0");
 
-        // Позиция, с которой начинается заголовок объекта CBitmapTexture (4 байта)
+        // Позиция, с которой начинается заголовок объекта (в данном случае CBitmapTexture) (4 байта)
         uint objectHeaderOffset = reader.ReadUInt32();
 
         // Что-то (4 байта)
@@ -145,7 +145,7 @@ static class Program
         // Размер объекта (4 байта)
         uint objectSize = reader.ReadUInt32();
 
-        // Позиция, с которой начинаются сам объект (т.е первое поле объекта) (4 байта)
+        // Позиция, с которой начинается сам объект (т.е первое поле объекта) (4 байта)
         uint objectOffset = reader.ReadUInt32();
 
         // Что-то (4 байта)
