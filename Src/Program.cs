@@ -297,7 +297,7 @@ static class Program
 
         // Проверяем, что дошли до конца файла
         if (reader.BaseStream.Position != reader.BaseStream.Length)
-            throw new Exception("something15 != 0");
+            throw new Exception("reader.BaseStream.Position != reader.BaseStream.Length");
 
         return result;
     }
