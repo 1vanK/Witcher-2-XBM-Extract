@@ -275,8 +275,6 @@ static class Program
             result.mipmaps.Add(data);
         }
 
-        // Проверяем, правильный ли конец файла. Несколько файлов в игре битые, но их все еще можно распаковать
-
         // Что-то (4 байта)
         uint something15 = reader.ReadUInt32();
         if (something15 != 0) // Всегда 0
