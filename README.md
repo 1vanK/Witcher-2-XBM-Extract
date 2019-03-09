@@ -1,4 +1,4 @@
-# Witcher 2 XBM Extractor (XBM to DDS)
+# Witcher 2 Texture Extractor (XBM to DDS)
 
 Works only with "The Witcher 2: Assassins Of Kings - Enhanced Edition / 3.4.4.1 / GOG"
 
